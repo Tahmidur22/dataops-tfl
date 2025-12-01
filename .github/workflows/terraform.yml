@@ -2,7 +2,7 @@ name: Infra-Terraform
 
 on:
   push:
-    branches: [develop, main, production]
+    branches: [main, uat, production]
   workflow_dispatch:
     inputs:
       environment:
@@ -16,8 +16,8 @@ permissions:
 
 env:
   ENV_NAME: ${{ github.event.inputs.environment
-    || (github.ref == 'refs/heads/develop' && 'dev')
-    || (github.ref == 'refs/heads/main' && 'uat')
+    || (github.ref == 'refs/heads/main' && 'dev')
+    || (github.ref == 'refs/heads/uat' && 'uat')
     || (github.ref == 'refs/heads/production' && 'prod')
     || 'dev' }}
 
