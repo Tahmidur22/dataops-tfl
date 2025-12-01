@@ -22,11 +22,12 @@ env:
     || 'dev' }}
 
 jobs:
-  plan:
+  plan-platform:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
+
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.1
@@ -50,26 +51,54 @@ jobs:
           ARM_CONTAINER_NAME: sttfldatatfstate-container
           ARM_KEY: tfl-data/${{ env.ENV_NAME }}.tfstate
 
-      - name: Terraform Plan
+      - name: Terraform Plan (Platform)
         working-directory: ./infra/env/${{ env.ENV_NAME }}/platform
         run: terraform plan -out=tfplan
+        env:
+          ARM_USE_OIDC: true
+
+    outputs:
+      env_name: ${{ env.ENV_NAME }}
+
+  apply-platform-nonprod:
+    needs: plan-platform
+    runs-on: ubuntu-latest
+    if: ${{ needs.plan-platform.outputs.env_name != 'prod' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.1
+
+      - uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Apply Platform
+        working-directory: ./infra/env/${{ needs.plan-platform.outputs.env_name }}/platform
+        run: terraform apply -auto-approve tfplan
         env:
           ARM_USE_OIDC: true
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    outputs:
-      env_name: ${{ env.ENV_NAME }}
-
   apply-platform-prod:
-    needs: plan
+    needs: plan-platform
     runs-on: ubuntu-latest
-    if: ${{ needs.plan.outputs.env_name == 'prod' }}
+    if: ${{ needs.plan-platform.outputs.env_name == 'prod' }}
     environment: production
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.1
 
       - uses: azure/login@v1
         with:
@@ -86,35 +115,14 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-  apply-platform-nonprod:
-    needs: plan
+  databricks-nonprod:
+    needs: [apply-platform-nonprod, apply-platform-prod]
     runs-on: ubuntu-latest
-    if: ${{ needs.plan.outputs.env_name != 'prod' }}
+    if: ${{ needs.plan-platform.outputs.env_name != 'prod' }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Apply Platform 
-        working-directory: ./infra/env/${{ needs.plan.outputs.env_name }}/platform
-        run: terraform apply -auto-approve tfplan
-        env:
-          ARM_USE_OIDC: true
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-  databricks:
-    needs: [apply-platform-prod, apply-platform-nonprod]
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.1
@@ -125,8 +133,8 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Databricks Terraform Init
-        working-directory: ./infra/env/${{ needs.plan.outputs.env_name }}/databricks
+      - name: Terraform Init
+        working-directory: ./infra/env/${{ needs.plan-platform.outputs.env_name }}/databricks
         run: terraform init -reconfigure
         env:
           ARM_USE_OIDC: true
@@ -136,20 +144,61 @@ jobs:
           ARM_RESOURCE_GROUP_NAME: sttfldatatfstate-rg
           ARM_STORAGE_ACCOUNT_NAME: sttfldatatfstate
           ARM_CONTAINER_NAME: sttfldatatfstate-container
-          ARM_KEY: tfl-data/${{ needs.plan.outputs.env_name }}-databricks.tfstate
+          ARM_KEY: tfl-data/${{ needs.plan-platform.outputs.env_name }}-databricks.tfstate
 
-      - name: Databricks Terraform Plan
-        working-directory: ./infra/env/${{ needs.plan.outputs.env_name }}/databricks
+      - name: Terraform Plan
+        working-directory: ./infra/env/${{ needs.plan-platform.outputs.env_name }}/databricks
         run: terraform plan -out=tfplan
+        env:
+          ARM_USE_OIDC: true
+
+      - name: Terraform Apply
+        working-directory: ./infra/env/${{ needs.plan-platform.outputs.env_name }}/databricks
+        run: terraform apply -auto-approve tfplan
+        env:
+          ARM_USE_OIDC: true
+
+  databricks-prod:
+    needs: [apply-platform-nonprod, apply-platform-prod]
+    runs-on: ubuntu-latest
+    if: ${{ needs.plan-platform.outputs.env_name == 'prod' }}
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.1
+
+      - uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Init
+        working-directory: ./infra/env/prod/databricks
+        run: terraform init -reconfigure
         env:
           ARM_USE_OIDC: true
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_RESOURCE_GROUP_NAME: sttfldatatfstate-rg
+          ARM_STORAGE_ACCOUNT_NAME: sttfldatatfstate
+          ARM_CONTAINER_NAME: sttfldatatfstate-container
+          ARM_KEY: tfl-data/prod-databricks.tfstate
 
-      - name: Databricks Terraform Apply
-        working-directory: ./infra/env/${{ needs.plan.outputs.env_name }}/databricks
-        run: terraform apply -auto-approve tfplan
+      - name: Terraform Plan
+        working-directory: ./infra/env/prod/databricks
+        run: terraform plan -out=tfplan
+        env:
+          ARM_USE_OIDC: true
+
+      - name: Terraform Apply
+        working-directory: ./infra/env/prod/databricks
+        run: terraform apply tfplan
         env:
           ARM_USE_OIDC: true
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
