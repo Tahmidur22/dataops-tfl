@@ -1,5 +1,6 @@
 resource_group_name  = "rg-data-uat"
-storage_account_name = "stflightuat"
+storage_account_name = "sttfluat"
 location             = "East US"
 spark_version        = "14.3.x-scala2.12"
 node_type_id         = "Standard_D4s_v3"
+environment          = "uat"

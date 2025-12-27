@@ -1,0 +1,5 @@
+resource_group_name  = "rg-data-prod"
+storage_account_name = "sttflprod"
+location             = "East US"
+environment          = "prod"
+ci_cd_sp_display_name = "cicd-oidc-prod"

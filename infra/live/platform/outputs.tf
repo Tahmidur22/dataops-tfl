@@ -7,9 +7,9 @@ output "resource_group_location" {
 }
 
 output "databricks_workspace_url" {
-  value = module.databricks_workspace_uat.workspace_url
+  value = module.databricks_workspace.workspace_url
 }
 
 output "databricks_workspace_id" {
-  value = module.databricks_workspace_uat.workspace_id
+  value = module.databricks_workspace.workspace_id
 }

@@ -1,5 +1,6 @@
 resource_group_name  = "rg-data-dev"
-storage_account_name = "stflightdev"
+storage_account_name = "sttfldev"
 location             = "East US"
 spark_version        = "14.3.x-scala2.12"
 node_type_id         = "Standard_D4s_v3"
+environment          = "dev"

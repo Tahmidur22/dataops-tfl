@@ -1,13 +1,13 @@
 data "azurerm_client_config" "current" {}
 
 module "rg" {
-  source              = "../../../modules/rg"
+  source              = "../../modules/rg"
   resource_group_name = var.resource_group_name
   location            = var.location
 }
 
 module "storage" {
-  source = "../../../modules/storage"
+  source = "../../modules/storage"
 
   resource_group_name  = module.rg.resource_group_name
   location             = module.rg.location
@@ -16,13 +16,13 @@ module "storage" {
 }
 
 module "key_vault" {
-  source              = "../../../modules/key_vault"
+  source              = "../../modules/key_vault"
   resource_group_name = module.rg.resource_group_name
   location            = module.rg.location
 }
 
 module "function_app" {
-  source                     = "../../../modules/function_app"
+  source                     = "../../modules/function_app"
   resource_group_name        = module.rg.resource_group_name
   location                   = module.rg.location
   storage_container_endpoint = "${module.storage.primary_blob_endpoint["landing"]}${module.storage.container_name["landing"]}"
@@ -43,11 +43,11 @@ module "function_app" {
 }
 
 data "azuread_service_principal" "ci_cd" {
-  display_name = "ci-cd-prod"
+  display_name = var.ci_cd_sp_display_name
 }
 
 module "rbac" {
-  source = "../../../modules/rbac"
+  source = "../../modules/rbac"
   role_assignments = [
     {
       principal_id         = module.function_app.identity_principal_id
@@ -75,13 +75,13 @@ module "rbac" {
 }
 
 module "data_factory" {
-  source              = "../../../modules/data_factory"
+  source              = "../../modules/data_factory"
   resource_group_name = module.rg.resource_group_name
   location            = module.rg.location
 }
 
-module "databricks_workspace_prod" {
-  source              = "../../../modules/databricks_workspace"
+module "databricks_workspace" {
+  source              = "../../modules/databricks_workspace"
   resource_group_name = module.rg.resource_group_name
   location            = module.rg.location
 }

@@ -1,0 +1,5 @@
+resource_group_name  = "rg-data-uat"
+storage_account_name = "sttfluat"
+location             = "East US"
+environment          = "uat"
+ci_cd_sp_display_name = "cicd-oidc-uat"

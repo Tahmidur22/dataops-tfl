@@ -1,0 +1,5 @@
+resource_group_name  = "rg-data-dev"
+storage_account_name = "sttfldev"
+location             = "East US"
+environment          = "dev"
+ci_cd_sp_display_name = "cicd-oidc"
