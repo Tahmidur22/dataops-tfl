@@ -14,7 +14,7 @@ variables:
   tf_state_container: sttfldatatfstate-container
   tf_state_key: tfl-data/platform-dev.tfstate
 
-  working_dir: 'infra/env/dev/platform'
+  working_dir: 'infra/live/platform'
   tfvars_file: 'infra/env/dev/platform/dev.tfvars'
 
 stages:
