@@ -27,7 +27,7 @@ stages:
         inputs:
           terraformVersion: latest
       - script: |
-          cd infra/stacks/platform
+          cd infra/live/platform
           terraform init \
             -backend-config="resource_group_name=$(tf_state_rg)" \
             -backend-config="storage_account_name=$(tf_state_storage_account)" \
@@ -36,5 +36,6 @@ stages:
             -reconfigure
           terraform fmt -check
           terraform validate
-          terraform plan -var-file=../../env/dev/platform/dev.tfvars
+          terraform plan \
+            -var-file=../../env/dev/platform/dev.tfvars \
         displayName: "Terraform Validation DEV"
