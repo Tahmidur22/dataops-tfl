@@ -1,0 +1,72 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  - group: variables
+
+stages:
+- stage: Dev
+  displayName: "Platform DEV"
+  jobs:
+  - job: TerraformDev
+    displayName: "Terraform Init + Plan"
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+      - checkout: self
+
+      - task: TerraformInstaller@1
+        inputs:
+          terraformVersion: latest
+
+      - task: TerraformCLI@2
+        displayName: "Terraform Init"
+        inputs:
+          command: 'init'
+          workingDirectory: '$(working_dir)'
+          backendType: 'azurerm'
+          backendServiceArm: 'TestV2'
+          ensureBackend: true
+          backendAzureRmResourceGroupName: 'sttfldatatfstate-rg'
+          backendAzureRmStorageAccountName: 'sttfldatatfstate'
+          backendAzureRmContainerName: 'sttfldatatfstate-container'
+          backendAzureRmKey: 'tfl-data/$(environment).tfstate'
+          allowTelemetryCollection: true
+        env:
+          ARM_USE_OIDC: true
+          ARM_CLIENT_ID: $(servicePrincipalId)
+          ARM_TENANT_ID: $(tenantId)
+          ARM_SUBSCRIPTION_ID: $(subscriptionId)
+
+      - task: TerraformCLI@2
+        displayName: "Terraform Validate"
+        inputs:
+          command: 'validate'
+          workingDirectory: '$(working_dir)'
+
+      - task: TerraformCLI@2
+        displayName: "Terraform Plan"
+        inputs:
+          command: 'plan'
+          workingDirectory: '$(working_dir)'
+          commandOptions: '-var-file=$(tfvars_file) -out=tfplan'
+        env:
+          ARM_USE_OIDC: true
+          ARM_CLIENT_ID: $(servicePrincipalId)
+          ARM_TENANT_ID: $(tenantId)
+          ARM_SUBSCRIPTION_ID: $(subscriptionId)
+
+      - task: PublishPipelineArtifact@1
+        displayName: "Publish Terraform Plan"
+        condition: succeeded()
+        inputs:
+          targetPath: '$(working_dir)/tfplan'
+          artifact: 'terraform-plan-dev'
+          publishLocation: 'pipeline'
