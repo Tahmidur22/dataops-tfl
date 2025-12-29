@@ -39,7 +39,7 @@ stages:
           backendAzureRmResourceGroupName: 'sttfldatatfstate-rg'
           backendAzureRmStorageAccountName: 'sttfldatatfstate'
           backendAzureRmContainerName: 'sttfldatatfstate-container'
-          backendAzureRmKey: 'tfl-data/$(environment).tfstate'  # Note: no leading slash
+          backendAzureRmKey: 'tfl-data/$(environment).tfstate'
           allowTelemetryCollection: true
         env:
           ARM_USE_OIDC: true
