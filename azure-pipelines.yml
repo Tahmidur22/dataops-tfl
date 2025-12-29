@@ -1,19 +1,40 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
-- main
+  branches:
+    include:
+      - main
 
-pool:
-  vmImage: ubuntu-latest
+pr:
+  branches:
+    include: 
+      - main
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+variables:
+  tf_state_rg: sttfldatatfstate-rg
+  tf_state_storage_account: sttfldatatfstate
+  tf_state_container: sttfldatatfstate-container
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+stages:
+- stage: Dev
+  displayName: "Platform DEV Validation"
+  jobs:
+  - job: TerraformValidate
+    displayName: "Terraform Init + Validate + Plan"
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+      - checkout: self
+      - task: TerraformInstaller@1
+        inputs:
+          terraformVersion: latest
+      - script: |
+          cd infra/stacks/platform
+          terraform init \
+            -backend-config="resource_group_name=$(tf_state_rg)" \
+            -backend-config="storage_account_name=$(tf_state_storage_account)" \
+            -backend-config="container_name=$(tf_state_container)" \
+            -backend-config="key=tfl-data/platform-dev.tfstate" \
+            -reconfigure
+          terraform fmt -check
+          terraform validate
+          terraform plan -var-file=../../env/dev/platform/dev.tfvars
+        displayName: "Terraform Validation DEV"
