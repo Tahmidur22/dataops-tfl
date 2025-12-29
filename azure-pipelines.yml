@@ -30,9 +30,7 @@ stages:
         displayName: "Terraform Init"
         inputs:
           command: 'init'
-          workingDirectory: '$(working_dir)'
-          backendType: 'azurerm'
-          backendServiceArm: 'TestV2'                    
+          workingDirectory: '$(working_dir)'                  
           ensureBackend: true
           backendAzureRmResourceGroupName: '$(tf_state_rg)'
           backendAzureRmStorageAccountName: '$(tf_state_storage_account)'
