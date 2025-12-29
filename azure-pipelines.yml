@@ -30,7 +30,7 @@ stages:
       - task: AzureCLI@2
         displayName: "Azure Login (OIDC)"
         inputs:
-          azureSubscription: 'TestV2'
+          azureSubscription: 'TestV3'
           scriptType: bash
           scriptLocation: inlineScript
           inlineScript: |
