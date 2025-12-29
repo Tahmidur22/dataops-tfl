@@ -14,11 +14,14 @@ variables:
   tf_state_container: sttfldatatfstate-container
   tf_state_key: tfl-data/platform-dev.tfstate
 
+  working_dir: 'infra/env/dev/platform'
+  tfvars_file: 'infra/env/dev/platform/dev.tfvars'
+
 stages:
 - stage: Dev
-  displayName: "Platform DEV Validation"
+  displayName: "Platform DEV"
   jobs:
-  - job: TerraformValidate
+  - job: TerraformDev
     displayName: "Terraform Init + Validate + Plan"
     pool:
       vmImage: ubuntu-latest
@@ -29,28 +32,38 @@ stages:
         inputs:
           terraformVersion: latest
 
-      - task: AzureCLI@2
+      - task: TerraformCLI@2
+        displayName: "Terraform Init"
         inputs:
-          azureSubscription: 'TestV2'          
-          scriptType: bash
-          scriptLocation: inlineScript
-          inlineScript: |
-            echo "Logged in via service connection"
+          command: 'init'
+          workingDirectory: '$(working_dir)'
+          backendType: 'azurerm'
+          backendServiceArm: 'TestV2'                    
+          ensureBackend: true
+          backendAzureRmResourceGroupName: '$(tf_state_rg)'
+          backendAzureRmStorageAccountName: '$(tf_state_storage_account)'
+          backendAzureRmContainerName: '$(tf_state_container)'
+          backendAzureRmKey: '$(tf_state_key)'
+          allowTelemetryCollection: true
+        env:
+          ARM_USE_OIDC: true
+          ARM_CLIENT_ID: $(servicePrincipalId)
+          ARM_TENANT_ID: $(tenantId)
+          ARM_SUBSCRIPTION_ID: $(subscriptionId)
 
-      - script: |
-          cd infra/live/platform
+      # Terraform Validate
+      - task: TerraformCLI@2
+        displayName: "Terraform Validate"
+        inputs:
+          command: 'validate'
+          workingDirectory: '$(working_dir)'
+          environmentServiceNameAzureRM: 'TestV2'
 
-          # Init backend explicitly with reconfigure
-          terraform init \
-            -backend-config="resource_group_name=$(tf_state_rg)" \
-            -backend-config="storage_account_name=$(tf_state_storage_account)" \
-            -backend-config="container_name=$(tf_state_container)" \
-            -backend-config="key=$(tf_state_key)" \
-            -reconfigure
-
-          terraform fmt -check
-
-          terraform validate
-
-          terraform plan -var-file=../../env/dev/platform/dev.tfvars
-        displayName: "Terraform Init + Validate + Plan"
+      # Terraform Plan
+      - task: TerraformCLI@2
+        displayName: "Terraform Plan"
+        inputs:
+          command: 'plan'
+          workingDirectory: '$(working_dir)'
+          environmentServiceNameAzureRM: 'TestV2'
+          commandOptions: '-var-file=$(tfvars_file)'
