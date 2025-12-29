@@ -34,7 +34,8 @@ stages:
           command: 'plan'
           workingDirectory: 'infra/live/platform'
           environmentServiceNameAzureRM: 'TestV2'           
-          ensureBackend: true                               
+          ensureBackend: true   
+          backendType: 'azurerm'                            
           backendServiceArm: 'TestV2'                       
           backendConfiguration: |
             resource_group_name=$(tf_state_rg)
