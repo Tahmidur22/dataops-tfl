@@ -65,3 +65,8 @@ stages:
           workingDirectory: '$(working_dir)'
           environmentServiceNameAzureRM: 'TestV2'
           commandOptions: '-var-file=$(tfvars_file)'
+        env:
+          ARM_USE_OIDC: true
+          ARM_CLIENT_ID: $(servicePrincipalId)
+          ARM_TENANT_ID: $(tenantId)
+          ARM_SUBSCRIPTION_ID: $(subscriptionId)
