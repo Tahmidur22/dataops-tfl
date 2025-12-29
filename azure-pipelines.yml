@@ -15,7 +15,7 @@ variables:
   tf_state_key: tfl-data/platform-dev.tfstate
 
   working_dir: 'infra/live/platform'
-  tfvars_file: 'infra/env/dev/platform/dev.tfvars'
+  tfvars_file: '../../env/dev/platform/dev.tfvars'
 
 stages:
 - stage: Dev
@@ -51,7 +51,6 @@ stages:
           ARM_TENANT_ID: $(tenantId)
           ARM_SUBSCRIPTION_ID: $(subscriptionId)
 
-      # Terraform Validate
       - task: TerraformCLI@2
         displayName: "Terraform Validate"
         inputs:
@@ -59,7 +58,6 @@ stages:
           workingDirectory: '$(working_dir)'
           environmentServiceNameAzureRM: 'TestV2'
 
-      # Terraform Plan
       - task: TerraformCLI@2
         displayName: "Terraform Plan"
         inputs:
