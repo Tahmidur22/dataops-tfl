@@ -8,6 +8,12 @@ pr:
     include:
       - main
 
+variables:
+  tf_state_rg: sttfldatatfstate-rg
+  tf_state_storage_account: sttfldatatfstate
+  tf_state_container: sttfldatatfstate-container
+  tf_state_key: tfl-data/platform-dev.tfstate
+
 stages:
 - stage: Dev
   displayName: "Platform DEV Validation"
@@ -21,14 +27,18 @@ stages:
       - task: TerraformInstaller@1
         inputs:
           terraformVersion: latest
-      - task: TerraformCLI@0
+      - task: TerraformCLI@2
         displayName: "Terraform Init + Validate + Plan"
         inputs:
           provider: 'azurerm'
           command: 'plan'
           workingDirectory: 'infra/live/platform'
-          environmentServiceNameAzureRM: 'TestV2'
-          ensureBackend: true
-          backendType: 'azurerm'
-          backendServiceArm: 'TestV2'
+          environmentServiceNameAzureRM: 'TestV2'           
+          ensureBackend: true                               
+          backendServiceArm: 'TestV2'                       
+          backendConfiguration: |
+            resource_group_name=$(tf_state_rg)
+            storage_account_name=$(tf_state_storage_account)
+            container_name=$(tf_state_container)
+            key=$(tf_state_key)
           commandOptions: '-var-file=../../env/dev/platform/dev.tfvars'
