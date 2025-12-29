@@ -32,7 +32,7 @@ stages:
           command: 'init'
           workingDirectory: '$(working_dir)'
           backendType: 'azurerm'
-          backendServiceArm: 'TestV3'                    
+          backendServiceArm: 'TestV2'                    
           ensureBackend: true
           backendAzureRmResourceGroupName: '$(tf_state_rg)'
           backendAzureRmStorageAccountName: '$(tf_state_storage_account)'
