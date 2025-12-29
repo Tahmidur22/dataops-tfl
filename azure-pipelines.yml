@@ -32,7 +32,7 @@ stages:
           command: 'init'
           workingDirectory: '$(working_dir)'
           backendType: 'azurerm'
-          backendServiceArm: 'TestV2'                    
+          backendServiceArm: 'TestV3'                    
           ensureBackend: true
           backendAzureRmResourceGroupName: '$(tf_state_rg)'
           backendAzureRmStorageAccountName: '$(tf_state_storage_account)'
@@ -57,7 +57,7 @@ stages:
         inputs:
           command: 'plan'
           workingDirectory: '$(working_dir)'
-          environmentServiceNameAzureRM: 'TestV2'
+          environmentServiceNameAzureRM: 'TestV3'
           commandOptions: '-var-file=$(tfvars_file)'
         env:
           ARM_USE_OIDC: true
