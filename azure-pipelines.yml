@@ -9,56 +9,54 @@ pr:
       - main
 
 variables:
-  - group: variables
+  - group: variables  
 
 stages:
 - stage: Dev
   displayName: "Platform DEV"
   jobs:
   - job: TerraformDev
-    displayName: "Terraform Init + Validate + Plan"
+    displayName: "Terraform Init + Plan"
     pool:
       vmImage: ubuntu-latest
-
     steps:
-    - checkout: self
+      - checkout: self
 
-    - task: TerraformInstaller@1
-      inputs:
-        terraformVersion: latest
+      # Install Terraform
+      - task: TerraformInstaller@1
+        inputs:
+          terraformVersion: latest
 
-    - script: |
-        echo "ARM vars:"
-        env | grep ARM_
-      displayName: Debug ARM env vars
+      - task: AzureCLI@2
+        displayName: "Azure Login (OIDC)"
+        inputs:
+          azureSubscription: 'TestV2'
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+            echo "Logged in with OIDC"
+            az account show
 
-    - task: TerraformCLI@2
-      displayName: Terraform Init
-      inputs:
-        command: init
-        workingDirectory: $(working_dir)
-        commandOptions: >
-          -backend-config="key=tfl-data/$(environment).tfstate"
-      env:
-        ARM_USE_OIDC: true
-        ARM_CLIENT_ID: $(servicePrincipalId)
-        ARM_TENANT_ID: $(tenantId)
-        ARM_SUBSCRIPTION_ID: $(subscriptionId)
+  
+      - task: TerraformCLI@2
+        displayName: "Terraform Init"
+        inputs:
+          command: 'init'
+          workingDirectory: '$(working_dir)'
+          commandOptions: '-backend-config="key=tfl-data/$(environment).tfstate"'
+          allowTelemetryCollection: true
 
-    - task: TerraformCLI@2
-      displayName: Terraform Validate
-      inputs:
-        command: validate
-        workingDirectory: $(working_dir)
+ 
+      - task: TerraformCLI@2
+        displayName: "Terraform Validate"
+        inputs:
+          command: 'validate'
+          workingDirectory: '$(working_dir)'
 
-    - task: TerraformCLI@2
-      displayName: Terraform Plan
-      inputs:
-        command: plan
-        workingDirectory: $(working_dir)
-        commandOptions: -var-file=$(tfvars_file)
-      env:
-        ARM_USE_OIDC: true
-        ARM_CLIENT_ID: $(servicePrincipalId)
-        ARM_TENANT_ID: $(tenantId)
-        ARM_SUBSCRIPTION_ID: $(subscriptionId)
+     
+      - task: TerraformCLI@2
+        displayName: "Terraform Plan"
+        inputs:
+          command: 'plan'
+          workingDirectory: '$(working_dir)'
+          commandOptions: '-var-file=$(tfvars_file)'
