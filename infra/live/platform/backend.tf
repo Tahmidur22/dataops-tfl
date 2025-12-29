@@ -5,6 +5,5 @@ terraform {
     resource_group_name  = "sttfldatatfstate-rg"
     storage_account_name = "sttfldatatfstate"
     container_name       = "sttfldatatfstate-container"
-    use_oidc             = true
   }
 }
