@@ -19,45 +19,46 @@ stages:
     displayName: "Terraform Init + Validate + Plan"
     pool:
       vmImage: ubuntu-latest
+
     steps:
-      - checkout: self
+    - checkout: self
 
-      - task: TerraformInstaller@1
-        inputs:
-          terraformVersion: latest
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: latest
 
-      - task: TerraformCLI@2
-        displayName: "Terraform Init"
-        inputs:
-          command: 'init'
-          workingDirectory: '$(working_dir)'                  
-          ensureBackend: true
-          backendAzureRmResourceGroupName: '$(tf_state_rg)'
-          backendAzureRmStorageAccountName: '$(tf_state_storage_account)'
-          backendAzureRmContainerName: '$(tf_state_container)'
-          backendAzureRmKey: '$(tf_state_key)'
-          allowTelemetryCollection: true
-        env:
-          ARM_USE_OIDC: true
-          ARM_CLIENT_ID: $(servicePrincipalId)
-          ARM_TENANT_ID: $(tenantId)
-          ARM_SUBSCRIPTION_ID: $(subscriptionId)
+    - script: |
+        echo "ARM vars:"
+        env | grep ARM_
+      displayName: Debug ARM env vars
 
-      - task: TerraformCLI@2
-        displayName: "Terraform Validate"
-        inputs:
-          command: 'validate'
-          workingDirectory: '$(working_dir)'
+    - task: TerraformCLI@2
+      displayName: Terraform Init
+      inputs:
+        command: init
+        workingDirectory: $(working_dir)
+        commandOptions: >
+          -backend-config="key=tfl-data/$(environment).tfstate"
+      env:
+        ARM_USE_OIDC: true
+        ARM_CLIENT_ID: $(servicePrincipalId)
+        ARM_TENANT_ID: $(tenantId)
+        ARM_SUBSCRIPTION_ID: $(subscriptionId)
 
-      - task: TerraformCLI@2
-        displayName: "Terraform Plan"
-        inputs:
-          command: 'plan'
-          workingDirectory: '$(working_dir)'
-          commandOptions: '-var-file=$(tfvars_file)'
-        env:
-          ARM_USE_OIDC: true
-          ARM_CLIENT_ID: $(servicePrincipalId)
-          ARM_TENANT_ID: $(tenantId)
-          ARM_SUBSCRIPTION_ID: $(subscriptionId)
+    - task: TerraformCLI@2
+      displayName: Terraform Validate
+      inputs:
+        command: validate
+        workingDirectory: $(working_dir)
 
+    - task: TerraformCLI@2
+      displayName: Terraform Plan
+      inputs:
+        command: plan
+        workingDirectory: $(working_dir)
+        commandOptions: -var-file=$(tfvars_file)
+      env:
+        ARM_USE_OIDC: true
+        ARM_CLIENT_ID: $(servicePrincipalId)
+        ARM_TENANT_ID: $(tenantId)
+        ARM_SUBSCRIPTION_ID: $(subscriptionId)
