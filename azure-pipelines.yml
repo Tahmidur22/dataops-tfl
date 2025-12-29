@@ -50,19 +50,16 @@ stages:
         inputs:
           command: 'validate'
           workingDirectory: '$(working_dir)'
-          environmentServiceNameAzureRM: 'TestV2'
 
       - task: TerraformCLI@2
         displayName: "Terraform Plan"
         inputs:
           command: 'plan'
           workingDirectory: '$(working_dir)'
-          environmentServiceNameAzureRM: 'TestV3'
           commandOptions: '-var-file=$(tfvars_file)'
         env:
           ARM_USE_OIDC: true
           ARM_CLIENT_ID: $(servicePrincipalId)
           ARM_TENANT_ID: $(tenantId)
           ARM_SUBSCRIPTION_ID: $(subscriptionId)
-          ARM_CLIENT_SECRET: $(azureServicePrincipalKey)
 
