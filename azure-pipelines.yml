@@ -34,7 +34,7 @@ stages:
           command: 'init'
           workingDirectory: '$(working_dir)'
           backendType: 'azurerm'
-          backendServiceArm: 'TestV3'  # Your service connection
+          backendServiceArm: 'TestV2'  # Your service connection
           ensureBackend: true
           backendAzureRmResourceGroupName: 'sttfldatatfstate-rg'
           backendAzureRmStorageAccountName: 'sttfldatatfstate'
