@@ -22,32 +22,52 @@ stages:
     steps:
       - checkout: self
 
+      # Install Terraform
       - task: TerraformInstaller@1
         inputs:
           terraformVersion: latest
 
+      # Terraform Init - Use the specific backend parameters
       - task: TerraformCLI@2
         displayName: "Terraform Init"
         inputs:
           command: 'init'
           workingDirectory: '$(working_dir)'
-          commandOptions: '-backend-config="key=tfl-data/$(environment).tfstate"'
-          environmentServiceNameAzureRM: 'TestV3' 
+          backendType: 'azurerm'
+          backendServiceArm: 'TestV3'  # Your service connection
+          ensureBackend: true
+          backendAzureRmResourceGroupName: 'sttfldatatfstate-rg'
+          backendAzureRmStorageAccountName: 'sttfldatatfstate'
+          backendAzureRmContainerName: 'sttfldatatfstate-container'
+          backendAzureRmKey: 'tfl-data/$(environment).tfstate'  # Note: no leading slash
+          allowTelemetryCollection: true
+        env:
+          ARM_USE_OIDC: true
+          ARM_CLIENT_ID: $(servicePrincipalId)
+          ARM_TENANT_ID: $(tenantId)
+          ARM_SUBSCRIPTION_ID: $(subscriptionId)
 
+      # Terraform Validate
       - task: TerraformCLI@2
         displayName: "Terraform Validate"
         inputs:
           command: 'validate'
           workingDirectory: '$(working_dir)'
 
+      # Terraform Plan
       - task: TerraformCLI@2
         displayName: "Terraform Plan"
         inputs:
           command: 'plan'
           workingDirectory: '$(working_dir)'
           commandOptions: '-var-file=$(tfvars_file) -out=tfplan'
-          environmentServiceNameAzureRM: 'TestV3'
+        env:
+          ARM_USE_OIDC: true
+          ARM_CLIENT_ID: $(servicePrincipalId)
+          ARM_TENANT_ID: $(tenantId)
+          ARM_SUBSCRIPTION_ID: $(subscriptionId)
 
+      # Optional: Publish the plan as an artifact
       - task: PublishPipelineArtifact@1
         displayName: "Publish Terraform Plan"
         condition: succeeded()
