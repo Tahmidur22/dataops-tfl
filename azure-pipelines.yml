@@ -9,13 +9,7 @@ pr:
       - main
 
 variables:
-  tf_state_rg: sttfldatatfstate-rg
-  tf_state_storage_account: sttfldatatfstate
-  tf_state_container: sttfldatatfstate-container
-  tf_state_key: tfl-data/platform-dev.tfstate
-
-  working_dir: 'infra/live/platform'
-  tfvars_file: '../../env/dev/platform/dev.tfvars'
+  - group: variables
 
 stages:
 - stage: Dev
