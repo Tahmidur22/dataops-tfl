@@ -61,7 +61,7 @@ stages:
               inputs:
                 command: apply
                 workingDirectory: $(working_dir)
-                commandOptions: '$(working_dir)/tfplan'
+                commandOptions: 'tfplan'
               env:
                 ARM_USE_OIDC: true
                 ARM_CLIENT_ID: $(servicePrincipalId)
