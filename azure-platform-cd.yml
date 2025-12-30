@@ -18,6 +18,8 @@ stages:
   jobs:
   - deployment: ApplyDev
     environment: dev
+    variables:
+      environment: dev
     strategy:
       runOnce:
         deploy:
@@ -42,26 +44,47 @@ stages:
                 backendAzureRmResourceGroupName: sttfldatatfstate-rg
                 backendAzureRmStorageAccountName: sttfldatatfstate
                 backendAzureRmContainerName: sttfldatatfstate-container
-                backendAzureRmKey: tfl-data/dev.tfstate
+                backendAzureRmKey: tfl-data/dev.tfstat
 
             - task: TerraformCLI@2
               displayName: Terraform Apply
               inputs:
                 command: apply
                 workingDirectory: $(working_dir)
-                commandOptions: tfplan
+                commandOptions: '$(Pipeline.Workspace)/azure-pipelines/terraform-plan-dev/tfplan'
 
 - stage: UAT
   displayName: Platform UAT Apply
   dependsOn: Dev
+  condition: succeeded('Dev')  
   jobs:
   - deployment: ApplyUAT
     environment: uat
+    variables:
+      environment: uat  
     strategy:
       runOnce:
         deploy:
           steps:
             - checkout: self
+            
+            - task: TerraformInstaller@1
+              inputs:
+                terraformVersion: latest
+                
+            - task: TerraformCLI@2 
+              displayName: Terraform Init UAT
+              inputs:
+                command: init
+                workingDirectory: $(working_dir)
+                backendType: azurerm
+                backendServiceArm: TestV2
+                ensureBackend: true
+                backendAzureRmResourceGroupName: sttfldatatfstate-rg
+                backendAzureRmStorageAccountName: sttfldatatfstate
+                backendAzureRmContainerName: sttfldatatfstate-container
+                backendAzureRmKey: tfl-data/uat.tfstate
+                
             - task: TerraformCLI@2
               inputs:
                 command: apply
