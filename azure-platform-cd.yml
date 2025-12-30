@@ -1,0 +1,71 @@
+trigger: none
+
+resources:
+  pipelines:
+    - pipeline: azure-pipelines
+      source: azure-pipelines
+      trigger:
+        branches:
+          include:
+            - main
+
+variables:
+  - group: variables
+
+stages:
+- stage: Dev
+  displayName: Platform DEV Apply
+  jobs:
+  - deployment: ApplyDev
+    environment: dev
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - download: platformCI
+              artifact: terraform-plan-dev
+
+            - checkout: self
+
+            - task: TerraformInstaller@1
+              inputs:
+                terraformVersion: latest
+
+            - task: TerraformCLI@2
+              displayName: Terraform Init
+              inputs:
+                command: init
+                workingDirectory: $(working_dir)
+                backendType: azurerm
+                backendServiceArm: TestV2
+                ensureBackend: true
+                backendAzureRmResourceGroupName: sttfldatatfstate-rg
+                backendAzureRmStorageAccountName: sttfldatatfstate
+                backendAzureRmContainerName: sttfldatatfstate-container
+                backendAzureRmKey: tfl-data/dev.tfstate
+
+            - task: TerraformCLI@2
+              displayName: Terraform Apply
+              inputs:
+                command: apply
+                workingDirectory: $(working_dir)
+                commandOptions: tfplan
+
+- stage: UAT
+  displayName: Platform UAT Apply
+  dependsOn: Dev
+  jobs:
+  - deployment: ApplyUAT
+    environment: uat
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - checkout: self
+            - task: TerraformCLI@2
+              inputs:
+                command: apply
+                workingDirectory: $(working_dir)
+                commandOptions: >
+                  -var-file=../../env/uat/platform/uat.tfvars
+                  -auto-approve
