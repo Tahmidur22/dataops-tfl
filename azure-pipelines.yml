@@ -1,14 +1,18 @@
-name: 'azure-pipelines' 
+name: 'azure-pipelines-ci' 
 
 trigger:
   branches:
     include:
       - main
+      - dev 
+      - uat 
 
 pr:
   branches:
     include:
       - main
+      - dev 
+      - uat 
 
 variables:
   - group: variables
