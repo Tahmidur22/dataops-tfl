@@ -47,47 +47,66 @@ stages:
                 backendAzureRmKey: tfl-data/dev.tfstat
 
             - task: TerraformCLI@2
-              displayName: Terraform Apply
+              displayName: "Terraform Plan"
               inputs:
-                command: apply
-                commandOptions: '$(Pipeline.Workspace)/DataOpsTFL/terraform-plan-dev/tfplan'
+                command: 'plan'
+                workingDirectory: '$(working_dir)'
+                commandOptions: '-var-file=$(tfvars_file) -out=tfplan'
+              env:
+                ARM_USE_OIDC: true
+                ARM_CLIENT_ID: $(servicePrincipalId)
+                ARM_TENANT_ID: $(tenantId)
+                ARM_SUBSCRIPTION_ID: $(subscriptionId)
 
-- stage: UAT
-  displayName: Platform UAT Apply
-  dependsOn: Dev
-  condition: succeeded('Dev')  
-  jobs:
-  - deployment: ApplyUAT
-    environment: uat
-    variables:
-      environment: uat  
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-            - checkout: self
-            
-            - task: TerraformInstaller@1
-              inputs:
-                terraformVersion: latest
-                
-            - task: TerraformCLI@2 
-              displayName: Terraform Init UAT
-              inputs:
-                command: init
-                workingDirectory: $(working_dir)
-                backendType: azurerm
-                backendServiceArm: TestV2
-                ensureBackend: true
-                backendAzureRmResourceGroupName: sttfldatatfstate-rg
-                backendAzureRmStorageAccountName: sttfldatatfstate
-                backendAzureRmContainerName: sttfldatatfstate-container
-                backendAzureRmKey: tfl-data/uat.tfstate
-                
+
             - task: TerraformCLI@2
+              displayName: Terraform Apply Dev
               inputs:
                 command: apply
                 workingDirectory: $(working_dir)
-                commandOptions: >
-                  -var-file=../../env/uat/platform/uat.tfvars
-                  -auto-approve
+                commandOptions: '$(working_dir)/tfplan-dev'
+              env:
+                ARM_USE_OIDC: true
+                ARM_CLIENT_ID: $(servicePrincipalId)
+                ARM_TENANT_ID: $(tenantId)
+                ARM_SUBSCRIPTION_ID: $(subscriptionId)
+
+# - stage: UAT
+#   displayName: Platform UAT Apply
+#   dependsOn: Dev
+#   condition: succeeded('Dev')  
+#   jobs:
+#   - deployment: ApplyUAT
+#     environment: uat
+#     variables:
+#       environment: uat  
+#     strategy:
+#       runOnce:
+#         deploy:
+#           steps:
+#             - checkout: self
+            
+#             - task: TerraformInstaller@1
+#               inputs:
+#                 terraformVersion: latest
+                
+#             - task: TerraformCLI@2 
+#               displayName: Terraform Init UAT
+#               inputs:
+#                 command: init
+#                 workingDirectory: $(working_dir)
+#                 backendType: azurerm
+#                 backendServiceArm: TestV2
+#                 ensureBackend: true
+#                 backendAzureRmResourceGroupName: sttfldatatfstate-rg
+#                 backendAzureRmStorageAccountName: sttfldatatfstate
+#                 backendAzureRmContainerName: sttfldatatfstate-container
+#                 backendAzureRmKey: tfl-data/uat.tfstate
+                
+#             - task: TerraformCLI@2
+#               inputs:
+#                 command: apply
+#                 workingDirectory: $(working_dir)
+#                 commandOptions: >
+#                   -var-file=../../env/uat/platform/uat.tfvars
+#                   -auto-approve
