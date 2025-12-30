@@ -1,4 +1,4 @@
-name: 'azure-pipelines-ci' 
+name: 'azure-platform-ci' 
 
 trigger:
   branches:
