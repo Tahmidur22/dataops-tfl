@@ -50,8 +50,9 @@ stages:
               displayName: Terraform Apply
               inputs:
                 command: apply
-                workingDirectory: $(working_dir)
-                commandOptions: '$(Pipeline.Workspace)/azure-pipelines/terraform-plan-dev/tfplan'
+                commandOptions: >
+                  -var-file=../../env/dev/platform/dev.tfvars
+                  -auto-approve
 
 - stage: UAT
   displayName: Platform UAT Apply
