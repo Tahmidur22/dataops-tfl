@@ -50,9 +50,7 @@ stages:
               displayName: Terraform Apply
               inputs:
                 command: apply
-                commandOptions: >
-                  -var-file=../../env/dev/platform/dev.tfvars
-                  -auto-approve
+                commandOptions: '$(Pipeline.Workspace)/DataOpsTFL/terraform-plan-dev/tfplan'
 
 - stage: UAT
   displayName: Platform UAT Apply
