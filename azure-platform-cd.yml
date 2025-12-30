@@ -2,8 +2,8 @@ trigger: none
 
 resources:
   pipelines:
-    - pipeline: DataOpsTFL
-      source: DataOpsTFL
+    - pipeline: azure-platform-ci
+      source: azure-platform-ci
       trigger:
         branches:
           include:
@@ -24,6 +24,9 @@ stages:
       runOnce:
         deploy:
           steps:
+            - download: azure-platform-ci
+              artifact: terraform-plan
+
             - checkout: self
 
             - task: TerraformInstaller@1
