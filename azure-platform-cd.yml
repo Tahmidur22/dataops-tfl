@@ -2,7 +2,7 @@ trigger: none
 
 resources:
   pipelines:
-    - pipeline: azure-pipelines
+    - pipeline: DataOpsTFL
       source: azure-pipelines
       trigger:
         branches:
