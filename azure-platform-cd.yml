@@ -48,7 +48,7 @@ stages:
               inputs:
                 command: 'plan'
                 workingDirectory: '$(working_dir)'
-                commandOptions: '-var-file=$(tfvars_file) -out=tfplan'
+                commandOptions: '-var-file=../../env/dev/platform/dev.tfvars -out=tfplan'
               env:
                 ARM_USE_OIDC: true
                 ARM_CLIENT_ID: $(servicePrincipalId)
