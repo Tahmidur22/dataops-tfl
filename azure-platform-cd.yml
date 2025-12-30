@@ -22,7 +22,7 @@ stages:
       runOnce:
         deploy:
           steps:
-            - download: azure-piplines
+            - download: azure-pipelines
               artifact: terraform-plan-dev
 
             - checkout: self
