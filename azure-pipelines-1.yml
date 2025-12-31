@@ -1,0 +1,59 @@
+trigger: none
+
+resources:
+  pipelines:
+    - pipeline: azure-platform-ci
+      source: azure-platform-ci
+      trigger:
+        branches:
+          include:
+            - main
+
+variables:
+  - group: variables
+
+stages:
+- stage: Uat
+  displayName: Platform UAT Apply
+  jobs:
+  - deployment: ApplyUat
+    environment: uat
+    variables:
+      environment: uat
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - download: azure-platform-ci
+              artifact: terraform-plan
+
+            - checkout: self
+
+            - task: TerraformInstaller@1
+              inputs:
+                terraformVersion: latest
+
+            - task: TerraformCLI@2
+              displayName: Terraform Init
+              inputs:
+                command: init
+                workingDirectory: $(working_dir)
+                backendType: azurerm
+                backendServiceArm: TestV2
+                ensureBackend: true
+                backendAzureRmResourceGroupName: sttfldatatfstate-rg
+                backendAzureRmStorageAccountName: sttfldatatfstate
+                backendAzureRmContainerName: sttfldatatfstate-container
+                backendAzureRmKey: tfl-data/uat.tfstat
+
+            - task: TerraformCLI@2
+              displayName: Terraform Apply Uat
+              inputs:
+                command: apply
+                workingDirectory: $(working_dir)
+                commandOptions: '$(Pipeline.Workspace)/azure-platform-ci/terraform-plan/tfplan'
+              env:
+                ARM_USE_OIDC: true
+                ARM_CLIENT_ID: $(servicePrincipalId)
+                ARM_TENANT_ID: $(tenantId)
+                ARM_SUBSCRIPTION_ID: $(subscriptionId)
