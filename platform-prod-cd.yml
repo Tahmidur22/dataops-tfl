@@ -1,10 +1,69 @@
+trigger: none
 
-trigger:
-- main
+resources:
+  pipelines:
+    - pipeline: azure-platform-ci
+      source: azure-platform-ci
+      trigger:
+        branches:
+          include:
+            - main
 
-pool:
-  vmImage: ubuntu-latest
+variables:
+  - group: variables
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+stages:
+- stage: Prod
+  displayName: Platform Prod Apply
+  jobs:
+  - deployment: ApplyProd
+    environment: prod
+    variables:
+      environment: prod
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+            - checkout: self
+
+            - task: TerraformInstaller@1
+              inputs:
+                terraformVersion: latest
+
+            - task: TerraformCLI@2
+              displayName: Terraform Init
+              inputs:
+                command: init
+                workingDirectory: $(working_dir)
+                backendType: azurerm
+                backendServiceArm: TestV2
+                ensureBackend: true
+                backendAzureRmResourceGroupName: sttfldatatfstate-rg
+                backendAzureRmStorageAccountName: sttfldatatfstate
+                backendAzureRmContainerName: sttfldatatfstate-container
+                backendAzureRmKey: tfl-data/prod.tfstat
+            
+            - task: TerraformCLI@2
+              displayName: Terraform Plan PROD
+              inputs:
+                command: plan
+                workingDirectory: $(working_dir)
+                commandOptions: '-var-file=../../env/prod/platform/prod.tfvars -out=tfplan'
+              env:
+                ARM_USE_OIDC: true
+                ARM_CLIENT_ID: $(servicePrincipalId)
+                ARM_TENANT_ID: $(tenantId)
+                ARM_SUBSCRIPTION_ID: $(subscriptionId)
+
+            - task: TerraformCLI@2
+              displayName: Terraform Apply PROD
+              inputs:
+                command: apply
+                workingDirectory: $(working_dir)
+                commandOptions: tfplan
+              env:
+                ARM_USE_OIDC: true
+                ARM_CLIENT_ID: $(servicePrincipalId)
+                ARM_TENANT_ID: $(tenantId)
+                ARM_SUBSCRIPTION_ID: $(subscriptionId)
