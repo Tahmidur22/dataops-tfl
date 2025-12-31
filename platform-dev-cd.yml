@@ -50,6 +50,11 @@ stages:
                 command: plan
                 workingDirectory: $(working_dir)
                 commandOptions: '-var-file=../../env/dev/platform/dev.tfvars -out=tfplan'
+              env:
+                ARM_USE_OIDC: true
+                ARM_CLIENT_ID: $(servicePrincipalId)
+                ARM_TENANT_ID: $(tenantId)
+                ARM_SUBSCRIPTION_ID: $(subscriptionId)
 
             - task: TerraformCLI@2
               displayName: Terraform Apply DEV
