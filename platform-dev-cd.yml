@@ -1,9 +1,64 @@
-trigger:
-- main
+trigger: none
 
-pool:
-  vmImage: ubuntu-latest
+resources:
+  pipelines:
+    - pipeline: azure-platform-ci
+      source: azure-platform-ci
+      trigger:
+        branches:
+          include:
+            - main
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+variables:
+  - group: variables
+
+stages:
+- stage: Dev
+  displayName: Platform DEV Apply
+  jobs:
+  - deployment: ApplyDev
+    environment: dev
+    variables:
+      environment: dev
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+            - checkout: self
+
+            - task: TerraformInstaller@1
+              inputs:
+                terraformVersion: latest
+
+            - task: TerraformCLI@2
+              displayName: Terraform Init
+              inputs:
+                command: init
+                workingDirectory: $(working_dir)
+                backendType: azurerm
+                backendServiceArm: TestV2
+                ensureBackend: true
+                backendAzureRmResourceGroupName: sttfldatatfstate-rg
+                backendAzureRmStorageAccountName: sttfldatatfstate
+                backendAzureRmContainerName: sttfldatatfstate-container
+                backendAzureRmKey: tfl-data/dev.tfstat
+            
+            - task: TerraformCLI@2
+              displayName: Terraform Plan DEV
+              inputs:
+                command: plan
+                workingDirectory: $(working_dir)
+                commandOptions: '-var-file=../../env/dev/platform/dev.tfvars -out=tfplan'
+
+            - task: TerraformCLI@2
+              displayName: Terraform Apply DEV
+              inputs:
+                command: apply
+                workingDirectory: $(working_dir)
+                commandOptions: tfplan
+              env:
+                ARM_USE_OIDC: true
+                ARM_CLIENT_ID: $(servicePrincipalId)
+                ARM_TENANT_ID: $(tenantId)
+                ARM_SUBSCRIPTION_ID: $(subscriptionId)
