@@ -56,23 +56,3 @@ stages:
         inputs:
           command: 'validate'
           workingDirectory: '$(working_dir)'
-
-      # - task: TerraformCLI@2
-      #   displayName: "Terraform Plan"
-      #   inputs:
-      #     command: plan
-      #     workingDirectory: '$(working_dir)'
-      #     commandOptions: '-var-file=$(tfvars_file) -out=tfplan'
-      #   env:
-      #     ARM_USE_OIDC: true
-      #     ARM_CLIENT_ID: $(servicePrincipalId)
-      #     ARM_TENANT_ID: $(tenantId)
-      #     ARM_SUBSCRIPTION_ID: $(subscriptionId)
-
-      # - task: PublishPipelineArtifact@1
-      #   displayName: "Publish Terraform Plan"
-      #   condition: succeeded()
-      #   inputs:
-      #     targetPath: '$(working_dir)/tfplan'
-      #     artifact: 'terraform-plan'
-      #     publishLocation: 'pipeline'
