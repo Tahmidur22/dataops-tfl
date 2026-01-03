@@ -20,7 +20,7 @@ stages:
 # DEV & UAT
 - stage: PlatformDeployDevUat
   displayName: "Deploy Platform (Dev/Uat)"
-  condition: and(succeeded(), or(eq(variables['Build.Reason'], 'Manual'), eq(variables['Build.SourceBranchName'], 'dev'), eq(variables['Build.SourceBranchName'], 'uat')))
+  condition: and(succeeded(), or(eq(variables['environment'], 'dev'), eq(variables['environment'], 'uat')))
   jobs:
   - deployment: ApplyPlatform
     environment: ${{ variables.environment }}
