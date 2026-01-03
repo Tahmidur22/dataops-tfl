@@ -22,10 +22,6 @@ stages:
       runOnce:
         deploy:
           steps:
-            - download: platformCD
-              artifact: platform-outputs
-              displayName: Download Platform Outputs
-
             - checkout: self
 
             - task: TerraformInstaller@1
