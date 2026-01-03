@@ -14,23 +14,22 @@ variables:
 
 stages:
 - stage: DatabricksDeploy
-  displayName: Deploy Databricks Workspace (PROD)
+  displayName: Deploy Databricks Workspace
   jobs:
   - deployment: DeployDatabricks
     environment: dev
-    variables:
-      environment: dev
     strategy:
       runOnce:
         deploy:
           steps:
             - download: platformCD
               artifact: platform-outputs
-              displayName: "Download Platform Artifacts"
+              displayName: Download Platform Outputs
 
             - checkout: self
 
             - task: TerraformInstaller@1
+              displayName: Install Terraform
               inputs:
                 terraformVersion: latest
 
@@ -45,7 +44,7 @@ stages:
                 backendAzureRmResourceGroupName: sttfldatatfstate-rg
                 backendAzureRmStorageAccountName: sttfldatatfstate
                 backendAzureRmContainerName: sttfldatatfstate-container
-                backendAzureRmKey: tfl-data/prod-databricks.tfstate
+                backendAzureRmKey: tfl-data/dev-databricks.tfstate
               env:
                 ARM_USE_OIDC: true
                 ARM_CLIENT_ID: $(servicePrincipalId)
@@ -57,7 +56,9 @@ stages:
               inputs:
                 command: plan
                 workingDirectory: $(working_dir)/databricks
-                commandOptions: '-var-file=../../env/dev/databricks/dev.tfvars -out=tfplan'
+                commandOptions: >
+                  -var-file=../../env/dev/databricks/dev.tfvars
+                  -out=tfplan
               env:
                 ARM_USE_OIDC: true
                 ARM_CLIENT_ID: $(servicePrincipalId)
