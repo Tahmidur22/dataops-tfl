@@ -55,7 +55,7 @@ stages:
                 backendAzureRmResourceGroupName: sttfldatatfstate-rg
                 backendAzureRmStorageAccountName: sttfldatatfstate
                 backendAzureRmContainerName: sttfldatatfstate-container
-                backendAzureRmKey: tfl-data/${{ variables.environment }}.tfstate
+                backendAzureRmKey: tfl-data/${{ parameters.environment }}.tfstate
               env:
                 ARM_USE_OIDC: true
                 ARM_CLIENT_ID: $(servicePrincipalId)
@@ -67,7 +67,7 @@ stages:
               inputs:
                 command: plan
                 workingDirectory: $(working_dir)
-                commandOptions: '-var-file=../../env/${{ variables.environment }}/platform/${{ variables.environment }}.tfvars -out=tfplan'
+                commandOptions: '-var-file=../../env/${{ parameters.environment }}/platform/${{ parameters.environment}}.tfvars -out=tfplan'
               env:
                 ARM_USE_OIDC: true
                 ARM_CLIENT_ID: $(servicePrincipalId)
