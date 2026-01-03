@@ -42,7 +42,7 @@ stages:
                 backendAzureRmResourceGroupName: sttfldatatfstate-rg
                 backendAzureRmStorageAccountName: sttfldatatfstate
                 backendAzureRmContainerName: sttfldatatfstate-container
-                backendAzureRmKey: tfl-data/dev.tfstat
+                backendAzureRmKey: tfl-data/dev.tfstate
             
             - task: TerraformCLI@2
               displayName: Terraform Plan DEV
