@@ -1,5 +1,14 @@
 trigger: none
 
+resources:
+  pipelines:
+    - pipeline: platform-dev-cd
+      source: platform-dev-cd
+      trigger:
+        branches:
+          include:
+            - dev
+
 variables:
   - group: variables
 
