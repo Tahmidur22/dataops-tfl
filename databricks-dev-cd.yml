@@ -37,7 +37,7 @@ stages:
               displayName: Terraform Init (Databricks)
               inputs:
                 command: init
-                workingDirectory: $(working_dir)/databricks
+                workingDirectory: $(working_dir)
                 backendType: azurerm
                 backendServiceArm: TestV2
                 ensureBackend: true
@@ -55,7 +55,7 @@ stages:
               displayName: Terraform Plan (Databricks)
               inputs:
                 command: plan
-                workingDirectory: $(working_dir)/databricks
+                workingDirectory: $(working_dir)
                 commandOptions: >
                   -var-file=../../env/dev/databricks/dev.tfvars
                   -out=tfplan
@@ -69,7 +69,7 @@ stages:
               displayName: Terraform Apply (Databricks)
               inputs:
                 command: apply
-                workingDirectory: $(working_dir)/databricks
+                workingDirectory: $(working_dir)
                 commandOptions: tfplan
               env:
                 ARM_USE_OIDC: true
