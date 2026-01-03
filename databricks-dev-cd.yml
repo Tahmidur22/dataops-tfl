@@ -2,36 +2,36 @@ trigger: none
 
 resources:
   pipelines:
-    - pipeline: platform-dev-cd
-      source: platform-dev-cd
-      trigger:
-        branches:
-          include:
-            - dev
+    - pipeline: platform-cd
+      source: platform-cd
+      trigger: true 
 
 variables:
   - group: variables
+  - name: environment
+    value: dev
 
 stages:
-- stage: DatabricksDeploy
-  displayName: Deploy Databricks Workspace
+# DEV & UAT 
+- stage: DatabricksDeployDevStage
+  displayName: "Deploy Databricks (Dev/Stage)"
+  condition: and(succeeded(), or(eq(variables['Build.SourceBranchName'], 'main'), eq(variables['Build.SourceBranchName'], 'uat')))
   jobs:
   - deployment: DeployDatabricks
-    environment: dev
+    environment: ${{ variables.environment }}
     strategy:
       runOnce:
         deploy:
           steps:
-
             - checkout: self
 
             - task: TerraformInstaller@1
-              displayName: Install Terraform
+              displayName: "Install Terraform"
               inputs:
                 terraformVersion: latest
 
             - task: TerraformCLI@2
-              displayName: Terraform Init (Databricks)
+              displayName: "Terraform Init"
               inputs:
                 command: init
                 workingDirectory: $(working_data_dir)
@@ -41,7 +41,7 @@ stages:
                 backendAzureRmResourceGroupName: sttfldatatfstate-rg
                 backendAzureRmStorageAccountName: sttfldatatfstate
                 backendAzureRmContainerName: sttfldatatfstate-container
-                backendAzureRmKey: tfl-data/dev-databricks.tfstate
+                backendAzureRmKey: tfl-data/${{ variables.environment }}-databricks.tfstate
               env:
                 ARM_USE_OIDC: true
                 ARM_CLIENT_ID: $(servicePrincipalId)
@@ -49,13 +49,11 @@ stages:
                 ARM_SUBSCRIPTION_ID: $(subscriptionId)
 
             - task: TerraformCLI@2
-              displayName: Terraform Plan (Databricks)
+              displayName: "Terraform Plan"
               inputs:
                 command: plan
                 workingDirectory: $(working_data_dir)
-                commandOptions: >
-                  -var-file=../../env/dev/databricks/dev.tfvars
-                  -out=tfplan
+                commandOptions: '-var-file=../../env/${{ variables.environment }}/databricks/${{ variables.environment }}.tfvars -out=tfplan'
               env:
                 ARM_USE_OIDC: true
                 ARM_CLIENT_ID: $(servicePrincipalId)
@@ -63,7 +61,67 @@ stages:
                 ARM_SUBSCRIPTION_ID: $(subscriptionId)
 
             - task: TerraformCLI@2
-              displayName: Terraform Apply (Databricks)
+              displayName: "Terraform Apply"
+              inputs:
+                command: apply
+                workingDirectory: $(working_data_dir)
+                commandOptions: tfplan
+              env:
+                ARM_USE_OIDC: true
+                ARM_CLIENT_ID: $(servicePrincipalId)
+                ARM_TENANT_ID: $(tenantId)
+                ARM_SUBSCRIPTION_ID: $(subscriptionId)
+
+# PROD 
+- stage: DatabricksDeployProd
+  displayName: "Deploy Databricks (Prod)"
+  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
+  jobs:
+  - deployment: DeployDatabricksProd
+    environment: prod
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - checkout: self
+
+            - task: TerraformInstaller@1
+              displayName: "Install Terraform"
+              inputs:
+                terraformVersion: latest
+
+            - task: TerraformCLI@2
+              displayName: "Terraform Init"
+              inputs:
+                command: init
+                workingDirectory: $(working_data_dir)
+                backendType: azurerm
+                backendServiceArm: TestV2
+                ensureBackend: true
+                backendAzureRmResourceGroupName: sttfldatatfstate-rg
+                backendAzureRmStorageAccountName: sttfldatatfstate
+                backendAzureRmContainerName: sttfldatatfstate-container
+                backendAzureRmKey: tfl-data/prod-databricks.tfstate
+              env:
+                ARM_USE_OIDC: true
+                ARM_CLIENT_ID: $(servicePrincipalId)
+                ARM_TENANT_ID: $(tenantId)
+                ARM_SUBSCRIPTION_ID: $(subscriptionId)
+
+            - task: TerraformCLI@2
+              displayName: "Terraform Plan"
+              inputs:
+                command: plan
+                workingDirectory: $(working_data_dir)
+                commandOptions: '-var-file=../../env/prod/databricks/prod.tfvars -out=tfplan'
+              env:
+                ARM_USE_OIDC: true
+                ARM_CLIENT_ID: $(servicePrincipalId)
+                ARM_TENANT_ID: $(tenantId)
+                ARM_SUBSCRIPTION_ID: $(subscriptionId)
+
+            - task: TerraformCLI@2
+              displayName: "Terraform Apply"
               inputs:
                 command: apply
                 workingDirectory: $(working_data_dir)
