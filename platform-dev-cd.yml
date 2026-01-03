@@ -4,7 +4,7 @@ resources:
   pipelines:
     - pipeline: azure-platform-ci
       source: azure-platform-ci
-      trigger: true
+      trigger: 
         branches:
           include:
             - dev
