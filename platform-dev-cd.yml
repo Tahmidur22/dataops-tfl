@@ -11,19 +11,28 @@ resources:
             - uat
             - main 
 
+parameters:
+  - name: environment
+    type: string
+    default: dev
+    values:
+      - dev
+      - uat
+      - prod
+
 variables:
   - group: variables
-  - name: environment
-    value: dev
+  # - name: environment
+  #   value: dev
 
 stages:
 # DEV & UAT
 - stage: PlatformDeployDevUat
   displayName: "Deploy Platform (Dev/Uat)"
-  condition: and(succeeded(), or(eq(variables['environment'], 'dev'), eq(variables['environment'], 'uat')))
+  condition: and(succeeded(), or(eq('${{ parameters.environment }}', 'dev'), eq('${{ parameters.environment }}', 'uat')))
   jobs:
   - deployment: ApplyPlatform
-    environment: ${{ variables.environment }}
+    environment: ${{ parameters.environment }}
     strategy:
       runOnce:
         deploy:
